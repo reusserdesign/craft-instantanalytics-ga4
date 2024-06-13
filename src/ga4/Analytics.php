@@ -335,7 +335,7 @@ class Analytics
         $this->request();
     }
 
-    protected function request(): BaseRequest
+    public function request(): BaseRequest
     {
         if ($this->_request === null) {
             $this->_request = new BaseRequest();
