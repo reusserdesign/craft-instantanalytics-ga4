@@ -1,6 +1,9 @@
 # Instant Analytics GA4 Changelog
 
 ## 3.0.2 - UNRELEASED
+### Added
+* Allow access to the `request()` method by making it `public` ([31](https://github.com/nystudio107/craft-instantanalytics-ga4/issues/31))
+
 ### Changed
 * Updated docs to use node 20 & a new sitemap plugin
 
