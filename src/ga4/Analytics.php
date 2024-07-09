@@ -13,7 +13,6 @@ namespace nystudio107\instantanalyticsGa4\ga4;
 
 use Br33f\Ga4\MeasurementProtocol\Dto\Event\AbstractEvent;
 use Br33f\Ga4\MeasurementProtocol\Dto\Request\BaseRequest;
-use Br33f\Ga4\MeasurementProtocol\Dto\Response\BaseResponse;
 use Br33f\Ga4\MeasurementProtocol\Exception\HydrationException;
 use Br33f\Ga4\MeasurementProtocol\Exception\ValidationException;
 use Br33f\Ga4\MeasurementProtocol\HttpClient;
@@ -104,8 +103,8 @@ class Analytics
 
         if (str_contains($this->_sessionString, '.')) {
             [$sessionId, $sessionNumber] = explode('.', $this->_sessionString);
-            $event->setSessionId($sessionId);
-            $event->setSessionNumber($sessionNumber);
+            $event->setParamValue('sessionId', $sessionId);
+            $event->setParamValue('sessionNumber', $sessionNumber);
         }
 
         $this->eventList[] = $event;
@@ -114,7 +113,7 @@ class Analytics
     /**
      * Send the events collected so far.
      *
-     * @return BaseResponse|null
+     * @return ?array
      * @throws HydrationException
      * @throws ValidationException
      */
@@ -257,7 +256,7 @@ class Analytics
         $service = $this->service();
 
         if (!$service) {
-            throw new InvalidConfigException('instant-analytics-ga4', 'Unable to create GA4 service object');
+            throw new InvalidConfigException('Unable to create GA4 service object');
         }
 
         $service->setMeasurementId($measurementId);
@@ -275,7 +274,7 @@ class Analytics
         $service = $this->service();
 
         if (!$service) {
-            throw new InvalidConfigException('instant-analytics-ga4', 'Unable to create GA4 service object');
+            throw new InvalidConfigException('Unable to create GA4 service object');
         }
 
         $service->setApiSecret($apiSecret);

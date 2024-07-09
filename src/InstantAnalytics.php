@@ -122,7 +122,9 @@ class InstantAnalytics extends Plugin
     {
         parent::init();
         self::$plugin = $this;
-        self::$settings = $this->getSettings();
+        /** @var Settings $settings */
+        $settings = $this->getSettings();
+        self::$settings = $settings;
 
         // Add in our Craft components
         $this->addComponents();
@@ -137,44 +139,6 @@ class InstantAnalytics extends Plugin
             ),
             __METHOD__
         );
-    }
-
-    /**
-     * @inheritdoc
-     */
-    protected function settingsHtml(): ?string
-    {
-        $commerceFields = [];
-
-        if (self::$commercePlugin !== null) {
-            $productTypes = self::$commercePlugin->getProductTypes()->getAllProductTypes();
-
-            foreach ($productTypes as $productType) {
-                $productFields = $this->getPullFieldsFromLayoutId($productType->fieldLayoutId);
-                /** @noinspection SlowArrayOperationsInLoopInspection */
-                $commerceFields = array_merge($commerceFields, $productFields);
-                if ($productType->hasVariants) {
-                    $variantFields = $this->getPullFieldsFromLayoutId($productType->variantFieldLayoutId);
-                    /** @noinspection SlowArrayOperationsInLoopInspection */
-                    $commerceFields = array_merge($commerceFields, $variantFields);
-                }
-            }
-        }
-
-        // Rend the settings template
-        try {
-            return Craft::$app->getView()->renderTemplate(
-                'instant-analytics-ga4/settings',
-                [
-                    'settings' => $this->getSettings(),
-                    'commerceFields' => $commerceFields,
-                ]
-            );
-        } catch (Exception $exception) {
-            Craft::error($exception->getMessage(), __METHOD__);
-        }
-
-        return '';
     }
 
     /**
@@ -218,6 +182,44 @@ class InstantAnalytics extends Plugin
             $category
         );
     }
+
+    /**
+     * @inheritdoc
+     */
+    protected function settingsHtml(): ?string
+    {
+        $commerceFields = [];
+
+        if (self::$commercePlugin !== null) {
+            $productTypes = self::$commercePlugin->getProductTypes()->getAllProductTypes();
+
+            foreach ($productTypes as $productType) {
+                $productFields = $this->getPullFieldsFromLayoutId($productType->fieldLayoutId);
+                /** @noinspection SlowArrayOperationsInLoopInspection */
+                $commerceFields = array_merge($commerceFields, $productFields);
+                if ($productType->hasVariants) {
+                    $variantFields = $this->getPullFieldsFromLayoutId($productType->variantFieldLayoutId);
+                    /** @noinspection SlowArrayOperationsInLoopInspection */
+                    $commerceFields = array_merge($commerceFields, $variantFields);
+                }
+            }
+        }
+
+        // Rend the settings template
+        try {
+            return Craft::$app->getView()->renderTemplate(
+                'instant-analytics-ga4/settings',
+                [
+                    'settings' => $this->getSettings(),
+                    'commerceFields' => $commerceFields,
+                ]
+            );
+        } catch (Exception $exception) {
+            Craft::error($exception->getMessage(), __METHOD__);
+        }
+
+        return '';
+    }
     // Protected Methods
     // =========================================================================
 
@@ -231,7 +233,9 @@ class InstantAnalytics extends Plugin
         $view->registerTwigExtension(new InstantAnalyticsTwigExtension());
 
         // Install our template hooks
+        /** @phpstan-ignore-next-line */
         $view->hook('iaSendPageView', [$this, 'iaSendPageView']);
+        /** @phpstan-ignore-next-line */
         $view->hook('iaInsertGtag', [$this, 'iaInsertGtag']);
 
         // Register our variables
@@ -274,9 +278,13 @@ class InstantAnalytics extends Plugin
             Plugins::EVENT_AFTER_LOAD_PLUGINS,
             function(Event $event): void {
                 // Determine if Craft Commerce is installed & enabled
-                self::$commercePlugin = Craft::$app->getPlugins()->getPlugin(self::COMMERCE_PLUGIN_HANDLE);
+                /** @var Commerce $commercePlugin */
+                $commercePlugin = Craft::$app->getPlugins()->getPlugin(self::COMMERCE_PLUGIN_HANDLE);
+                self::$commercePlugin = $commercePlugin;
                 // Determine if SEOmatic is installed & enabled
-                self::$seomaticPlugin = Craft::$app->getPlugins()->getPlugin(self::SEOMATIC_PLUGIN_HANDLE);
+                /** @var Seomatic $seomaticPlugin */
+                $seomaticPlugin = Craft::$app->getPlugins()->getPlugin(self::SEOMATIC_PLUGIN_HANDLE);
+                self::$seomaticPlugin = $seomaticPlugin;
 
                 // Make sure to install these only after we definitely know whether other plugins are installed
                 $request = Craft::$app->getRequest();

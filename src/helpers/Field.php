@@ -14,6 +14,7 @@ namespace nystudio107\instantanalyticsGa4\helpers;
 use Craft;
 use craft\base\Element;
 use craft\base\Field as BaseField;
+use craft\base\Volume;
 use craft\ckeditor\Field as CKEditorField;
 use craft\elements\MatrixBlock;
 use craft\elements\User;
@@ -24,8 +25,8 @@ use craft\fields\Matrix as MatrixField;
 use craft\fields\PlainText as PlainTextField;
 use craft\fields\Tags as TagsField;
 use craft\models\FieldLayout;
-use craft\models\Volume;
 use craft\redactor\Field as RedactorField;
+use yii\base\InvalidConfigException;
 
 /**
  * @author    nystudio107
@@ -65,22 +66,22 @@ class Field
      * Return all of the fields from the $layout that are of the type
      * $fieldClassKey
      *
-     * @param string      $fieldClassKey
+     * @param string $fieldClassKey
      * @param FieldLayout $layout
-     * @param bool        $keysOnly
+     * @param bool $keysOnly
      *
      * @return array
      */
     public static function fieldsOfTypeFromLayout(
-        string $fieldClassKey,
+        string      $fieldClassKey,
         FieldLayout $layout,
-        bool $keysOnly = true
+        bool        $keysOnly = true
     ): array {
         $foundFields = [];
         if (!empty(self::FIELD_CLASSES[$fieldClassKey])) {
             $fieldClasses = self::FIELD_CLASSES[$fieldClassKey];
             $fields = $layout->getFields();
-            /** @var  $field BaseField */
+            /** @var BaseField $field */
             foreach ($fields as $field) {
                 /** @var array $fieldClasses */
                 foreach ($fieldClasses as $fieldClass) {
@@ -103,15 +104,15 @@ class Field
      * Return all of the fields in the $element of the type $fieldClassKey
      *
      * @param Element $element
-     * @param string  $fieldClassKey
-     * @param bool    $keysOnly
+     * @param string $fieldClassKey
+     * @param bool $keysOnly
      *
      * @return array
      */
     public static function fieldsOfTypeFromElement(
         Element $element,
-        string $fieldClassKey,
-        bool $keysOnly = true
+        string  $fieldClassKey,
+        bool    $keysOnly = true
     ): array {
         $foundFields = [];
         $layout = $element->getFieldLayout();
@@ -125,8 +126,8 @@ class Field
     /**
      * Return all of the fields from Users layout of the type $fieldClassKey
      *
-     * @param string  $fieldClassKey
-     * @param bool    $keysOnly
+     * @param string $fieldClassKey
+     * @param bool $keysOnly
      *
      * @return array
      */
@@ -142,7 +143,7 @@ class Field
      * $fieldClassKey
      *
      * @param string $fieldClassKey
-     * @param bool   $keysOnly
+     * @param bool $keysOnly
      *
      * @return array
      */
@@ -174,7 +175,7 @@ class Field
      * $fieldClassKey
      *
      * @param string $fieldClassKey
-     * @param bool   $keysOnly
+     * @param bool $keysOnly
      *
      * @return array
      */
@@ -210,8 +211,8 @@ class Field
      * Return all of the fields in the $matrixBlock of the type $fieldType class
      *
      * @param MatrixBlock $matrixBlock
-     * @param string      $fieldType
-     * @param bool        $keysOnly
+     * @param string $fieldType
+     * @param bool $keysOnly
      *
      * @return array
      */
@@ -226,7 +227,7 @@ class Field
         }
         if ($matrixBlockTypeModel) {
             $fields = $matrixBlockTypeModel->getFields();
-            /** @var  $field BaseField */
+            /** @var BaseField $field */
             foreach ($fields as $field) {
                 if ($field instanceof $fieldType) {
                     $foundFields[$field->handle] = $field->name;

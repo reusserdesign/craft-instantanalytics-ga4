@@ -137,7 +137,7 @@ class Analytics
     public static function getEventTrackingUrl(
         string $url,
         string $eventName,
-        array $params = []
+        array  $params = []
     ): string {
         $urlParams = compact('url', 'eventName', 'params');
 
@@ -205,7 +205,7 @@ class Analytics
 
         // Check the $_SERVER[] super-global exclusions
         if (InstantAnalytics::$settings->serverExcludes !== null
-            && is_array(InstantAnalytics::$settings->serverExcludes)) {
+            && !empty(InstantAnalytics::$settings->serverExcludes)) {
             foreach (InstantAnalytics::$settings->serverExcludes as $match => $matchArray) {
                 if (isset($_SERVER[$match])) {
                     foreach ($matchArray as $matchItem) {
@@ -232,7 +232,7 @@ class Analytics
 
         // Filter by user group
         $userService = Craft::$app->getUser();
-        /** @var UserElement $user */
+        /** @var ?UserElement $user */
         $user = $userService->getIdentity();
         if ($user) {
             if (InstantAnalytics::$settings->adminExclude && $user->admin) {
@@ -242,7 +242,7 @@ class Analytics
             }
 
             if (InstantAnalytics::$settings->groupExcludes !== null
-                && is_array(InstantAnalytics::$settings->groupExcludes)) {
+                && !empty(InstantAnalytics::$settings->groupExcludes)) {
                 foreach (InstantAnalytics::$settings->groupExcludes as $matchItem) {
                     if ($user->isInGroup($matchItem)) {
                         $logExclusion('groupExcludes');
