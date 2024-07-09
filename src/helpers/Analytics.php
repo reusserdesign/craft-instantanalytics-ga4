@@ -118,7 +118,7 @@ class Analytics
         InstantAnalytics::$plugin->logAnalyticsEvent(
             'Created pageViewTrackingUrl for: {trackingUrl}',
             [
-                'trackingUrl' => $trackingUrl
+                'trackingUrl' => $trackingUrl,
             ],
             __METHOD__
         );
@@ -138,9 +138,8 @@ class Analytics
     public static function getEventTrackingUrl(
         string $url,
         string $eventName,
-        array $params = [],
-    ): string
-    {
+        array  $params = [],
+    ): string {
         $urlParams = compact('url', 'eventName', 'params');
 
         $fileName = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_BASENAME);
@@ -149,7 +148,7 @@ class Analytics
         InstantAnalytics::$plugin->logAnalyticsEvent(
             'Created eventTrackingUrl for: {trackingUrl}',
             [
-                'trackingUrl' => $trackingUrl
+                'trackingUrl' => $trackingUrl,
             ],
             __METHOD__
         );
@@ -168,8 +167,7 @@ class Analytics
         $result = true;
         $request = Craft::$app->getRequest();
 
-        $logExclusion = static function (string $setting)
-        {
+        $logExclusion = static function(string $setting) {
             if (InstantAnalytics::$settings->logExcludedAnalytics) {
                 $request = Craft::$app->getRequest();
                 $requestIp = $request->getUserIP();
@@ -208,7 +206,7 @@ class Analytics
 
         // Check the $_SERVER[] super-global exclusions
         if (InstantAnalytics::$settings->serverExcludes !== null
-            && is_array(InstantAnalytics::$settings->serverExcludes)) {
+            && !empty(InstantAnalytics::$settings->serverExcludes)) {
             foreach (InstantAnalytics::$settings->serverExcludes as $match => $matchArray) {
                 if (isset($_SERVER[$match])) {
                     foreach ($matchArray as $matchItem) {
@@ -224,7 +222,7 @@ class Analytics
 
         // Filter out bot/spam requests via UserAgent
         if (InstantAnalytics::$settings->filterBotUserAgents) {
-            $crawlerDetect = new CrawlerDetect;
+            $crawlerDetect = new CrawlerDetect();
             // Check the user agent of the current 'visitor'
             if ($crawlerDetect->isCrawler()) {
                 $logExclusion('filterBotUserAgents');
@@ -235,7 +233,7 @@ class Analytics
 
         // Filter by user group
         $userService = Craft::$app->getUser();
-        /** @var UserElement $user */
+        /** @var ?UserElement $user */
         $user = $userService->getIdentity();
         if ($user) {
             if (InstantAnalytics::$settings->adminExclude && $user->admin) {
@@ -245,7 +243,7 @@ class Analytics
             }
 
             if (InstantAnalytics::$settings->groupExcludes !== null
-                && is_array(InstantAnalytics::$settings->groupExcludes)) {
+                && !empty(InstantAnalytics::$settings->groupExcludes)) {
                 foreach (InstantAnalytics::$settings->groupExcludes as $matchItem) {
                     if ($user->isInGroup($matchItem)) {
                         $logExclusion('groupExcludes');

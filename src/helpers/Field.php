@@ -26,6 +26,7 @@ use craft\fields\Tags as TagsField;
 use craft\models\FieldLayout;
 use craft\models\Volume;
 use craft\redactor\Field as RedactorField;
+use Exception;
 
 /**
  * @author    nystudio107
@@ -74,14 +75,13 @@ class Field
     public static function fieldsOfTypeFromLayout(
         string      $fieldClassKey,
         FieldLayout $layout,
-        bool        $keysOnly = true
-    ): array
-    {
+        bool        $keysOnly = true,
+    ): array {
         $foundFields = [];
         if (!empty(self::FIELD_CLASSES[$fieldClassKey])) {
             $fieldClasses = self::FIELD_CLASSES[$fieldClassKey];
             $fields = $layout->getCustomFields();
-            /** @var  $field BaseField */
+            /** @var BaseField $field */
             foreach ($fields as $field) {
                 /** @var array $fieldClasses */
                 foreach ($fieldClasses as $fieldClass) {
@@ -112,9 +112,8 @@ class Field
     public static function fieldsOfTypeFromElement(
         Element $element,
         string  $fieldClassKey,
-        bool    $keysOnly = true
-    ): array
-    {
+        bool    $keysOnly = true,
+    ): array {
         $foundFields = [];
         $layout = $element->getFieldLayout();
         if ($layout !== null) {
@@ -186,12 +185,13 @@ class Field
         $globals = Craft::$app->getGlobals()->getAllSets();
         foreach ($globals as $global) {
             $layout = $global->getFieldLayout();
+            /** @phpstan-ignore-next-line */
             if ($layout) {
                 $fields = self::fieldsOfTypeFromLayout($fieldClassKey, $layout, $keysOnly);
                 // Prefix the keys with the global set name
                 $prefix = $global->handle;
                 $fields = array_combine(
-                    array_map(static function ($key) use ($prefix) {
+                    array_map(static function($key) use ($prefix) {
                         return $prefix . '.' . $key;
                     }, array_keys($fields)),
                     $fields
@@ -228,7 +228,7 @@ class Field
         }
         if ($matrixBlockTypeModel) {
             $fields = $matrixBlockTypeModel->getCustomFields();
-            /** @var  $field BaseField */
+            /** @var BaseField $field */
             foreach ($fields as $field) {
                 if ($field instanceof $fieldType) {
                     $foundFields[$field->handle] = $field->name;

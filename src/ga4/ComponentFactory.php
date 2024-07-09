@@ -84,7 +84,6 @@ class ComponentFactory
             throw new \InvalidArgumentException(Craft::t('instant-analytics-ga4', 'Unknown event type - ' . $componentName));
         }
         
-        return new $componentMap[$componentName];
-
+        return new $componentMap[$componentName]();
     }
 }

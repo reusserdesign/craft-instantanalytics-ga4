@@ -24,6 +24,8 @@ use craft\elements\db\EntryQuery;
 use craft\elements\db\MatrixBlockQuery;
 use craft\elements\db\TagQuery;
 use nystudio107\instantanalyticsGa4\InstantAnalytics;
+use yii\base\InvalidConfigException;
+use function get_class;
 
 /**
  * Commerce Service
@@ -124,6 +126,53 @@ class Commerce extends Component
         );
     }
 
+    /**
+     * Add a product impression from a Craft Commerce Product or Variant
+     *
+     * @param Product|Variant|null $productVariant the Product or Variant
+     * @throws InvalidConfigException
+     */
+    public function addCommerceProductImpression(Variant|Product|null $productVariant): void
+    {
+        if ($productVariant) {
+            $event = InstantAnalytics::$plugin->ga4->getAnalytics()->create()->ViewItemEvent();
+            $this->addProductDataFromProductOrVariant($event, $productVariant);
+
+            InstantAnalytics::$plugin->ga4->getAnalytics()->addEvent($event);
+
+            $sku = $productVariant instanceof Product ? $productVariant->getDefaultVariant()->sku : $productVariant->sku;
+            $name = $productVariant instanceof Product ? $productVariant->getName() : $productVariant->getProduct()->getName();
+            InstantAnalytics::$plugin->logAnalyticsEvent(
+                'Adding view item event for `{sku}` - `{name}` - `{name}` - `{index}`',
+                ['sku' => $sku, 'name' => $name],
+                __METHOD__
+            );
+        }
+    }
+
+    /**
+     * Add a product list impression from a Craft Commerce Product or Variant list
+     *
+     * @param Product[]|Variant[] $products
+     * @param string $listName
+     */
+    public function addCommerceProductListImpression(array $products, string $listName = 'default'): void
+    {
+        if (!empty($products)) {
+            $event = InstantAnalytics::$plugin->ga4->getAnalytics()->create()->ViewItemListEvent();
+            foreach ($products as $index => $productVariant) {
+                $this->addProductDataFromProductOrVariant($event, $productVariant, $index, $listName);
+            }
+
+            InstantAnalytics::$plugin->ga4->getAnalytics()->addEvent($event);
+
+            InstantAnalytics::$plugin->logAnalyticsEvent(
+                'Adding view item list event. Listing {number} of items from the `{listName}` list.',
+                ['number' => count($products), 'listName' => $listName],
+                __METHOD__
+            );
+        }
+    }
 
     /**
      * Add a Craft Commerce OrderModel to a Purchase Event
@@ -164,7 +213,7 @@ class Commerce extends Component
      * @param string $listName
      *
      * @return string the title of the product
-     * @throws \yii\base\InvalidConfigException
+     * @throws InvalidConfigException
      */
     protected function addProductDataFromLineItem(ItemBaseEvent $event, LineItem $lineItem, int $index = 0, string $listName = ''): string
     {
@@ -173,12 +222,13 @@ class Commerce extends Component
         $product = null;
         $purchasable = $lineItem->purchasable;
 
+        /** @phpstan-ignore-next-line */
         if ($purchasable === null) {
             $eventItem->setItemName($lineItem->getDescription());
             $eventItem->setItemId($lineItem->getSku());
         } else {
             $eventItem->setItemName($purchasable->title ?? $lineItem->getDescription());
-            $eventItem->setItemId($purchasable->getSku() ?? $lineItem->getSku());
+            $eventItem->setItemId($purchasable->getSku());
         }
         $eventItem->setPrice($lineItem->salePrice);
         $eventItem->setQuantity($lineItem->qty);
@@ -240,59 +290,11 @@ class Commerce extends Component
     }
 
     /**
-     * Add a product impression from a Craft Commerce Product or Variant
-     *
-     * @param Product|Variant $productVariant the Product or Variant
-     * @throws \yii\base\InvalidConfigException
-     */
-    public function addCommerceProductImpression(Variant|Product $productVariant): void
-    {
-        if ($productVariant) {
-            $event = InstantAnalytics::$plugin->ga4->getAnalytics()->create()->ViewItemEvent();
-            $this->addProductDataFromProductOrVariant($event, $productVariant);
-
-            InstantAnalytics::$plugin->ga4->getAnalytics()->addEvent($event);
-
-            $sku = $productVariant instanceof Product ? $productVariant->getDefaultVariant()->sku : $productVariant->sku;
-            $name = $productVariant instanceof Product ? $productVariant->getName() : $productVariant->getProduct()->getName();
-            InstantAnalytics::$plugin->logAnalyticsEvent(
-                'Adding view item event for `{sku}` - `{name}` - `{name}` - `{index}`',
-                ['sku' => $sku, 'name' => $name],
-                __METHOD__
-            );
-        }
-    }
-
-    /**
-     * Add a product list impression from a Craft Commerce Product or Variant list
-     *
-     * @param Product[]|Variant[] $products
-     * @param string $listName
-     */
-    public function addCommerceProductListImpression(array $products, string $listName = 'default'): void
-    {
-        if (!empty($products)) {
-            $event = InstantAnalytics::$plugin->ga4->getAnalytics()->create()->ViewItemListEvent();
-            foreach ($products as $index => $productVariant) {
-                $this->addProductDataFromProductOrVariant($event, $productVariant, $index, $listName);
-            }
-
-            InstantAnalytics::$plugin->ga4->getAnalytics()->addEvent($event);
-
-            InstantAnalytics::$plugin->logAnalyticsEvent(
-                'Adding view item list event. Listing {number} of items from the `{listName}` list.',
-                ['number' => count($products), 'listName' => $listName],
-                __METHOD__
-            );
-        }
-    }
-
-    /**
      * Extract product data from a Craft Commerce Product or Variant
      *
      * @param Product|Variant|null $productVariant the Product or Variant
      *
-     * @throws \yii\base\InvalidConfigException
+     * @throws InvalidConfigException
      */
     protected function addProductDataFromProductOrVariant(ItemBaseEvent $event, $productVariant = null, $index = null, $listName = ''): void
     {
@@ -311,7 +313,7 @@ class Commerce extends Component
 
         $eventItem->setItemId($variant->sku);
         $eventItem->setItemName($variant->title);
-        $eventItem->setPrice(number_format($variant->price, 2, '.', ''));
+        $eventItem->setPrice((float)number_format($variant->price, 2, '.', ''));
 
         $category = ($isVariant ? $variant->getProduct() : $productVariant)->getType()['name'];
 
@@ -322,12 +324,14 @@ class Commerce extends Component
                     $productVariant,
                     InstantAnalytics::$settings['productCategoryField']
                 );
-                if (empty($productData['category']) && $isVariant) {
-                    $category = $this->pullDataFromField(
-                        $productVariant->product,
-                        InstantAnalytics::$settings['productCategoryField']
-                    );
-                }
+                /* @TODO not sure what this even does
+                 * if (empty($productData['category']) && $isVariant) {
+                 * $category = $this->pullDataFromField(
+                 * $productVariant->product,
+                 * InstantAnalytics::$settings['productCategoryField']
+                 * );
+                 * }
+                 */
             }
             $eventItem->setItemCategory($category);
 
@@ -338,14 +342,15 @@ class Commerce extends Component
                     InstantAnalytics::$settings['productBrandField'],
                     true
                 );
-
-                if (empty($productData['brand']) && $isVariant) {
-                    $brand = $this->pullDataFromField(
-                        $productVariant,
-                        InstantAnalytics::$settings['productBrandField'],
-                        true
-                    );
-                }
+                /* @TODO not sure what this even does
+                 * if (empty($productData['brand']) && $isVariant) {
+                 * $brand = $this->pullDataFromField(
+                 * $productVariant,
+                 * InstantAnalytics::$settings['productBrandField'],
+                 * true
+                 * );
+                 * }
+                 */
                 $eventItem->setItemBrand($brand);
             }
         }
@@ -382,7 +387,7 @@ class Commerce extends Component
             if (!is_object($srcField)) {
                 return $result;
             }
-            switch (\get_class($srcField)) {
+            switch (get_class($srcField)) {
                 case MatrixBlockQuery::class:
                 case TagQuery::class:
                     break;
@@ -393,7 +398,7 @@ class Commerce extends Component
 
 
                 default:
-                    $result = strip_tags($srcField);
+                    $result = strip_tags($srcField->__toString());
                     break;
             }
         }

@@ -105,10 +105,8 @@ class InstantAnalyticsVariable implements ViteVariableInterface
     public function eventTrackingUrl(
         string $url,
         string $eventName = '',
-        array  $params = []
-    ): Markup
-    {
+        array  $params = [],
+    ): Markup {
         return Template::raw(AnalyticsHelper::getEventTrackingUrl($url, $eventName, $params));
     }
-
 }

@@ -12,7 +12,6 @@ namespace nystudio107\instantanalyticsGa4\services;
 
 use nystudio107\instantanalyticsGa4\assetbundles\instantanalytics\InstantAnalyticsAsset;
 use nystudio107\instantanalyticsGa4\services\Commerce as CommerceService;
-use nystudio107\instantanalyticsGa4\services\IA as IAService;
 use nystudio107\pluginvite\services\VitePluginService;
 use yii\base\InvalidConfigException;
 
@@ -55,7 +54,7 @@ trait ServicesTrait
                     'errorEntry' => 'src/js/app.ts',
                     'useDevServer' => true,
                 ],
-            ]
+            ],
         ];
     }
 
