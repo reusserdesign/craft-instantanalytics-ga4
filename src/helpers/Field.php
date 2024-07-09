@@ -42,7 +42,7 @@ class Field
     public const BLOCK_FIELD_CLASS_KEY = 'block';
 
     protected const FIELD_CLASSES = [
-        self::TEXT_FIELD_CLASS_KEY  => [
+        self::TEXT_FIELD_CLASS_KEY => [
             CKEditorField::class,
             PlainTextField::class,
             RedactorField::class,
@@ -189,8 +189,8 @@ class Field
                 // Prefix the keys with the global set name
                 $prefix = $global->handle;
                 $fields = array_combine(
-                    array_map(function ($key) use ($prefix) {
-                        return $prefix.'.'.$key;
+                    array_map(function($key) use ($prefix) {
+                        return $prefix . '.' . $key;
                     }, array_keys($fields)),
                     $fields
                 );

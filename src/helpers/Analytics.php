@@ -13,7 +13,6 @@ namespace nystudio107\instantanalyticsGa4\helpers;
 
 use Craft;
 use craft\elements\User as UserElement;
-use craft\helpers\App;
 use craft\helpers\StringHelper;
 use craft\helpers\UrlHelper;
 use Jaybizzle\CrawlerDetect\CrawlerDetect;
@@ -118,7 +117,7 @@ class Analytics
         InstantAnalytics::$plugin->logAnalyticsEvent(
             'Created pageViewTrackingUrl for: {trackingUrl}',
             [
-                'trackingUrl' => $trackingUrl
+                'trackingUrl' => $trackingUrl,
             ],
             __METHOD__
         );
@@ -139,8 +138,7 @@ class Analytics
         string $url,
         string $eventName,
         array $params = []
-    ): string
-    {
+    ): string {
         $urlParams = compact('url', 'eventName', 'params');
 
         $fileName = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_BASENAME);
@@ -149,7 +147,7 @@ class Analytics
         InstantAnalytics::$plugin->logAnalyticsEvent(
             'Created eventTrackingUrl for: {trackingUrl}',
             [
-                'trackingUrl' => $trackingUrl
+                'trackingUrl' => $trackingUrl,
             ],
             __METHOD__
         );
@@ -168,8 +166,7 @@ class Analytics
         $result = true;
         $request = Craft::$app->getRequest();
 
-        $logExclusion = static function (string $setting)
-        {
+        $logExclusion = static function(string $setting) {
             if (InstantAnalytics::$settings->logExcludedAnalytics) {
                 $request = Craft::$app->getRequest();
                 $requestIp = $request->getUserIP();
@@ -224,7 +221,7 @@ class Analytics
 
         // Filter out bot/spam requests via UserAgent
         if (InstantAnalytics::$settings->filterBotUserAgents) {
-            $crawlerDetect = new CrawlerDetect;
+            $crawlerDetect = new CrawlerDetect();
             // Check the user agent of the current 'visitor'
             if ($crawlerDetect->isCrawler()) {
                 $logExclusion('filterBotUserAgents');

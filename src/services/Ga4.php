@@ -29,7 +29,6 @@ use nystudio107\seomatic\helpers\Json;
  */
 class Ga4 extends Component
 {
-
     /**
      * @var Analytics
      */

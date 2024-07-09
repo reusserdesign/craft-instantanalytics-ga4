@@ -308,7 +308,7 @@ class Analytics
             'pageTitle' => 'page_title',
             'sendPageView' => 'send_page_view',
             'screenResolution' => 'screen_resolution',
-            'userId' => 'user_id'
+            'userId' => 'user_id',
         ];
 
         if (str_starts_with($methodName, 'set')) {
@@ -320,7 +320,6 @@ class Analytics
 
                 return $this;
             }
-
         }
 
         return null;
@@ -406,7 +405,6 @@ class Analytics
                 if ($session && $value) {
                     $session->set($key, $value);
                 }
-
             }
 
             // If SEOmatic is installed, set the affiliation as well
@@ -414,7 +412,6 @@ class Analytics
                 $siteName = Seomatic::$plugin->metaContainers->metaSiteVars->siteName;
                 $this->setAffiliation($siteName);
             }
-
         }
 
         if ($this->_service === false) {
