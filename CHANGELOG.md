@@ -1,8 +1,8 @@
 # Instant Analytics GA4 Changelog
 
-## 4.0.2 - UNRELEASED
+## 4.0.2 - 2024.07.09
 ### Added
-* Allow access to the `request()` method by making it `public` ([31](https://github.com/nystudio107/craft-instantanalytics-ga4/issues/31))
+* Allow access to the `request()` method by making it `public` ([#31](https://github.com/nystudio107/craft-instantanalytics-ga4/issues/31))
 * Add `phpstan` and `ecs` code linting
 * Add `code-analysis.yaml` GitHub action
 
