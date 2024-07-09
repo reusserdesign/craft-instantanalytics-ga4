@@ -13,7 +13,6 @@ namespace nystudio107\instantanalyticsGa4\ga4;
 
 use Br33f\Ga4\MeasurementProtocol\Dto\Event\AbstractEvent;
 use Br33f\Ga4\MeasurementProtocol\Dto\Request\BaseRequest;
-use Br33f\Ga4\MeasurementProtocol\Dto\Response\BaseResponse;
 use Br33f\Ga4\MeasurementProtocol\Exception\HydrationException;
 use Br33f\Ga4\MeasurementProtocol\Exception\ValidationException;
 use Br33f\Ga4\MeasurementProtocol\HttpClient;
@@ -78,7 +77,7 @@ class Analytics
 
     private $_sessionString = null;
 
-    private array $eventList = [];
+    private $eventList = [];
 
     /**
      * Component factory for creating events.
@@ -104,8 +103,8 @@ class Analytics
 
         if (str_contains($this->_sessionString, '.')) {
             [$sessionId, $sessionNumber] = explode('.', $this->_sessionString);
-            $event->setSessionId($sessionId);
-            $event->setSessionNumber($sessionNumber);
+            $event->setParamValue('sessionId', $sessionId);
+            $event->setParamValue('sessionNumber', $sessionNumber);
         }
 
         $this->eventList[] = $event;
@@ -114,7 +113,7 @@ class Analytics
     /**
      * Send the events collected so far.
      *
-     * @return BaseResponse|null
+     * @return ?array
      * @throws HydrationException
      * @throws ValidationException
      */
@@ -180,6 +179,11 @@ class Analytics
         return $responses;
     }
 
+    public function getAffiliation(): ?string
+    {
+        return $this->_affiliation;
+    }
+
     /**
      * Set affiliation for all the events that incorporate Commerce Product info for the remaining duration of request.
      *
@@ -192,11 +196,6 @@ class Analytics
         return $this;
     }
 
-    public function getAffiliation(): ?string
-    {
-        return $this->_affiliation;
-    }
-
     /**
      * Add a commerce item list impression.
      *
@@ -205,7 +204,8 @@ class Analytics
      * @param string $listName
      * @throws InvalidConfigException
      */
-    public function addCommerceProductImpression($productVariant, int $index = 0, string $listName = 'default') {
+    public function addCommerceProductImpression($productVariant, int $index = 0, string $listName = 'default')
+    {
         InstantAnalytics::$plugin->commerce->addCommerceProductImpression($productVariant);
     }
 
@@ -214,7 +214,8 @@ class Analytics
      *
      * @param Order $cart
      */
-    public function beginCheckout(Order $cart) {
+    public function beginCheckout(Order $cart)
+    {
         InstantAnalytics::$plugin->commerce->triggerBeginCheckoutEvent($cart);
     }
 
@@ -224,10 +225,11 @@ class Analytics
      * @param Product|Variant $productVariant
      * @param int $index
      * @param string $listName
-     * @deprecated `Analytics::addCommerceProductDetailView()` is deprecated. Use `Analytics::addCommerceProductImpression()` instead.
      * @throws InvalidConfigException
+     * @deprecated `Analytics::addCommerceProductDetailView()` is deprecated. Use `Analytics::addCommerceProductImpression()` instead.
      */
-    public function addCommerceProductDetailView($productVariant, int $index = 0, string $listName = 'default') {
+    public function addCommerceProductDetailView($productVariant, int $index = 0, string $listName = 'default')
+    {
         Craft::$app->getDeprecator()->log('Analytics::addCommerceProductDetailView()', '`Analytics::addCommerceProductDetailView()` is deprecated. Use `Analytics::addCommerceProductImpression()` instead.');
         $this->addCommerceProductImpression($productVariant);
     }
@@ -238,7 +240,8 @@ class Analytics
      * @param array $products
      * @param $listName
      */
-    public function addCommerceProductListImpression(array $products, string $listName = 'default') {
+    public function addCommerceProductListImpression(array $products, string $listName = 'default')
+    {
         InstantAnalytics::$plugin->commerce->addCommerceProductListImpression($products, $listName);
     }
 
@@ -253,7 +256,7 @@ class Analytics
         $service = $this->service();
 
         if (!$service) {
-            throw new InvalidConfigException('instant-analytics-ga4', 'Unable to create GA4 service object');
+            throw new InvalidConfigException('Unable to create GA4 service object');
         }
 
         $service->setMeasurementId($measurementId);
@@ -271,7 +274,7 @@ class Analytics
         $service = $this->service();
 
         if (!$service) {
-            throw new InvalidConfigException('instant-analytics-ga4', 'Unable to create GA4 service object');
+            throw new InvalidConfigException('Unable to create GA4 service object');
         }
 
         $service->setApiSecret($apiSecret);
@@ -304,7 +307,7 @@ class Analytics
             'pageTitle' => 'page_title',
             'sendPageView' => 'send_page_view',
             'screenResolution' => 'screen_resolution',
-            'userId' => 'user_id'
+            'userId' => 'user_id',
         ];
 
         if (str_starts_with($methodName, 'set')) {
@@ -316,13 +319,21 @@ class Analytics
 
                 return $this;
             }
-
         }
 
         return null;
     }
 
-    protected function request(): BaseRequest
+    /**
+     * Init the service used to send events
+     */
+    public function init(): void
+    {
+        $this->service();
+        $this->request();
+    }
+
+    public function request(): BaseRequest
     {
         if ($this->_request === null) {
             $this->_request = new BaseRequest();
@@ -340,15 +351,6 @@ class Analytics
 
 
         return $this->_request;
-    }
-
-    /**
-     * Init the service used to send events
-     */
-    public function init(): void
-    {
-        $this->service();
-        $this->request();
     }
 
     protected function service(): ?Service
@@ -402,7 +404,6 @@ class Analytics
                 if ($session && $value) {
                     $session->set($key, $value);
                 }
-
             }
 
             // If SEOmatic is installed, set the affiliation as well
@@ -410,7 +411,6 @@ class Analytics
                 $siteName = Seomatic::$plugin->metaContainers->metaSiteVars->siteName;
                 $this->setAffiliation($siteName);
             }
-
         }
 
         if ($this->_service === false) {

@@ -1,5 +1,19 @@
 # Instant Analytics GA4 Changelog
 
+## 3.0.2 - 2024.07.09
+### Added
+* Allow access to the `request()` method by making it `public` ([#31](https://github.com/nystudio107/craft-instantanalytics-ga4/issues/31))
+* Add `phpstan` and `ecs` code linting
+* Add `code-analysis.yaml` GitHub action
+
+### Changed
+* Updated docs to use node 20 & a new sitemap plugin
+* PHPstan code cleanup
+* ECS code cleanup
+
+### Fixed
+* Fixed an issue where an exception would be thrown if you're running PHP < `7.4` ([#29](https://github.com/nystudio107/craft-instantanalytics-ga4/issues/29))
+
 ## 3.0.1 - 2024.01.11
 ### Changed
 * Updated the buildchain to use Vite 5

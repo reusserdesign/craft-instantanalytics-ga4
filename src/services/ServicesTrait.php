@@ -51,7 +51,7 @@ trait ServicesTrait
                     'errorEntry' => 'src/js/app.ts',
                     'useDevServer' => true,
                 ],
-            ]
+            ],
         ], $config);
 
         parent::__construct($id, $parent, $config);

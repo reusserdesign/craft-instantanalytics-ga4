@@ -144,8 +144,7 @@ class InstantAnalyticsTwigExtension extends AbstractExtension implements Globals
         string $url,
         string $eventName,
         array $params = []
-    ): Markup
-    {
+    ): Markup {
         return Template::raw(Analytics::getEventTrackingUrl($url, $eventName, $params));
     }
 }

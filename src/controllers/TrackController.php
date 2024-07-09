@@ -22,18 +22,12 @@ use nystudio107\instantanalyticsGa4\InstantAnalytics;
  */
 class TrackController extends Controller
 {
-
     // Protected Properties
     // =========================================================================
 
-    /**
-     * @var    bool|array Allows anonymous access to this controller's actions.
-     *         The actions must be in 'kebab-case'
-     * @access protected
-     */
     protected $allowAnonymous = [
         'track-page-view-url',
-        'track-event-url'
+        'track-event-url',
     ];
 
     // Public Methods
@@ -58,8 +52,7 @@ class TrackController extends Controller
         string $url,
         string $eventName = '',
         array  $params = []
-    ): void
-    {
+    ): void {
         InstantAnalytics::$plugin->ga4->addSimpleEvent($url, $eventName, $params);
 
         $this->redirect($url, 200);
