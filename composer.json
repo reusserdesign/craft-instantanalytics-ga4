@@ -36,7 +36,9 @@
     "craftcms/ecs": "dev-main",
     "craftcms/phpstan": "dev-main",
     "craftcms/rector": "dev-main",
+    "craftcms/ckeditor": "^1.0.0",
     "craftcms/commerce": "^3.0.0",
+    "craftcms/redactor": "^2.0.0",
     "nystudio107/craft-seomatic": "^3.0.0"
   },
   "scripts": {
