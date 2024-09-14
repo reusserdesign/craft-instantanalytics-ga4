@@ -14,11 +14,11 @@ use Br33f\Ga4\MeasurementProtocol\Dto\Event\BaseEvent;
 use Br33f\Ga4\MeasurementProtocol\Dto\Parameter\BaseParameter;
 use Craft;
 use craft\base\Component;
+use craft\helpers\Json;
 use nystudio107\instantanalyticsGa4\ga4\Analytics;
 use nystudio107\instantanalyticsGa4\ga4\events\PageViewEvent;
 use nystudio107\instantanalyticsGa4\helpers\Analytics as AnalyticsHelper;
 use nystudio107\instantanalyticsGa4\InstantAnalytics;
-use nystudio107\seomatic\helpers\Json;
 
 /** @noinspection MissingPropertyAnnotationsInspection */
 
