@@ -1,5 +1,9 @@
 # Instant Analytics GA4 Changelog
 
+## 4.0.3 - 2024.09.14
+### Fixed
+* Fixed an inadvertant dependency on SEOmatic ([#35](https://github.com/nystudio107/craft-instantanalytics-ga4/issues/35))
+
 ## 4.0.2 - 2024.07.09
 ### Added
 * Allow access to the `request()` method by making it `public` ([#31](https://github.com/nystudio107/craft-instantanalytics-ga4/issues/31))
