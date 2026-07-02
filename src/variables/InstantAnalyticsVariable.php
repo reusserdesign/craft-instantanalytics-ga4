@@ -11,6 +11,7 @@
 namespace nystudio107\instantanalyticsGa4\variables;
 
 use Br33f\Ga4\MeasurementProtocol\Dto\Event\BaseEvent;
+use craft\commerce\elements\Order;
 use craft\commerce\elements\Product;
 use craft\commerce\elements\Variant;
 use craft\helpers\Template;
@@ -77,6 +78,57 @@ class InstantAnalyticsVariable implements ViteVariableInterface
     public function addCommerceProductView($productVariant): void
     {
         InstantAnalytics::$plugin->commerce->addCommerceProductImpression($productVariant);
+    }
+
+    /**
+     * @param Product|Variant $productVariant the Product or Variant
+     * @param string $listName
+     */
+    public function addCommerceProductSelect($productVariant, string $listName = 'default'): void
+    {
+        InstantAnalytics::$plugin->commerce->addCommerceProductSelect($productVariant, $listName);
+    }
+
+    /**
+     * Send a begin_checkout event for the given cart
+     *
+     * @param Order $cart
+     */
+    public function beginCheckout(Order $cart): void
+    {
+        InstantAnalytics::$plugin->commerce->triggerBeginCheckoutEvent($cart);
+    }
+
+    /**
+     * Send a view_cart event for the given cart
+     *
+     * @param Order $cart
+     */
+    public function viewCart(Order $cart): void
+    {
+        InstantAnalytics::$plugin->commerce->triggerViewCartEvent($cart);
+    }
+
+    /**
+     * Send an add_shipping_info event for the given cart
+     *
+     * @param Order $cart
+     * @param ?string $shippingTier
+     */
+    public function addShippingInfo(Order $cart, ?string $shippingTier = null): void
+    {
+        InstantAnalytics::$plugin->commerce->triggerAddShippingInfoEvent($cart, $shippingTier);
+    }
+
+    /**
+     * Send an add_payment_info event for the given cart
+     *
+     * @param Order $cart
+     * @param ?string $paymentType
+     */
+    public function addPaymentInfo(Order $cart, ?string $paymentType = null): void
+    {
+        InstantAnalytics::$plugin->commerce->triggerAddPaymentInfoEvent($cart, $paymentType);
     }
 
     /**

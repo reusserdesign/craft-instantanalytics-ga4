@@ -222,6 +222,50 @@ class Analytics
     }
 
     /**
+     * View cart.
+     *
+     * @param Order $cart
+     */
+    public function viewCart(Order $cart)
+    {
+        InstantAnalytics::$plugin->commerce->triggerViewCartEvent($cart);
+    }
+
+    /**
+     * Add shipping info during checkout.
+     *
+     * @param Order $cart
+     * @param ?string $shippingTier
+     */
+    public function addShippingInfo(Order $cart, ?string $shippingTier = null)
+    {
+        InstantAnalytics::$plugin->commerce->triggerAddShippingInfoEvent($cart, $shippingTier);
+    }
+
+    /**
+     * Add payment info during checkout.
+     *
+     * @param Order $cart
+     * @param ?string $paymentType
+     */
+    public function addPaymentInfo(Order $cart, ?string $paymentType = null)
+    {
+        InstantAnalytics::$plugin->commerce->triggerAddPaymentInfoEvent($cart, $paymentType);
+    }
+
+    /**
+     * Add a select item impression from a list.
+     *
+     * @param Product|Variant $productVariant
+     * @param string $listName
+     * @throws InvalidConfigException
+     */
+    public function addCommerceProductSelect(Product|Variant $productVariant, string $listName = 'default')
+    {
+        InstantAnalytics::$plugin->commerce->addCommerceProductSelect($productVariant, $listName);
+    }
+
+    /**
      * Add a commerce item list impression.
      *
      * @param Product|Variant $productVariant

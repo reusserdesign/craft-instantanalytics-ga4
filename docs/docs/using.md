@@ -143,6 +143,11 @@ It’ll just work.  In addition to the basic automatic tracking that Instant Ana
 
 * `{% do instantAnalytics.addCommerceProductListImpression(PAGE_PRODUCTS, LIST_NAME) %}` - This will send a `ViewItemList` event for a given Craft Commerce product list. `PAGE_PRODUCTS` should be an array of `Product` or `Variant` elements, while `LIST_NAME` should be a name for the product list being displayed. It’s optional and defaults to `default` if not specified.
 * `{% do instantAnalytics.addCommerceProductImpression(PRODUCT_VARIANT) %}` - This will send a `ViewItem` event for a given Craft Commerce `Product` or `Variant` (you can pass in either in `PRODUCT_VARIANT`).
+* `{% do instantAnalytics.addCommerceProductSelect(PRODUCT_VARIANT, LIST_NAME) %}` - This will send a `SelectItem` event for a given Craft Commerce `Product` or `Variant` when it is selected from a list. `LIST_NAME` is optional and defaults to `default`.
+* `{% do instantAnalytics.beginCheckout(CART) %}` - This will send a `BeginCheckout` event for the given cart `Order`, including all of its LineItems, currency, and value.
+* `{% do instantAnalytics.viewCart(CART) %}` - This will send a `ViewCart` event for the given cart `Order`, including all of its LineItems, currency, and value.
+* `{% do instantAnalytics.addShippingInfo(CART, SHIPPING_TIER) %}` - This will send an `AddShippingInfo` event for the given cart `Order`. `SHIPPING_TIER` is optional; if omitted it falls back to the order’s shipping method name.
+* `{% do instantAnalytics.addPaymentInfo(CART, PAYMENT_TYPE) %}` - This will send an `AddPaymentInfo` event for the given cart `Order`. `PAYMENT_TYPE` is optional; if omitted it falls back to the order’s gateway name.
 
 You can also take advantage of the built-in events, such as `AddShippingInfo` like this
 

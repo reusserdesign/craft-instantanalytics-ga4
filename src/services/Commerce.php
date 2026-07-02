@@ -91,6 +91,137 @@ class Commerce extends Component
     }
 
     /**
+     * Enqueue analytics information for the cart being viewed
+     *
+     * @param ?Order $order
+     */
+    public function triggerViewCartEvent(Order $order = null)
+    {
+        if ($order) {
+            $event = InstantAnalytics::$plugin->ga4->getAnalytics()->create()->ViewCartEvent();
+            // First, include the transaction data
+            $event->setCurrency($order->getPaymentCurrency())
+                ->setValue($order->getTotalPrice());
+
+            // Add each line item in the cart
+            $index = 1;
+            foreach ($order->lineItems as $lineItem) {
+                $this->addProductDataFromLineItem($event, $lineItem, $index);
+                $index++;
+            }
+
+            InstantAnalytics::$plugin->ga4->getAnalytics()->addEvent($event);
+
+            InstantAnalytics::$plugin->logAnalyticsEvent(
+                'Adding `Commerce - View Cart event``',
+                [],
+                __METHOD__
+            );
+        }
+    }
+
+    /**
+     * Enqueue analytics information for shipping info being added during checkout
+     *
+     * @param ?Order $order
+     * @param ?string $shippingTier the shipping tier; falls back to the order's shipping method name
+     */
+    public function triggerAddShippingInfoEvent(Order $order = null, ?string $shippingTier = null)
+    {
+        if ($order) {
+            $event = InstantAnalytics::$plugin->ga4->getAnalytics()->create()->AddShippingInfoEvent();
+            // First, include the transaction data
+            $event->setCurrency($order->getPaymentCurrency())
+                ->setValue($order->getTotalPrice());
+
+            // Determine the shipping tier from the order if one wasn't passed in
+            $shippingTier = $shippingTier ?? $order->shippingMethodName ?? $order->getShippingMethod()?->getName();
+            if (!empty($shippingTier)) {
+                $event->setShippingTier($shippingTier);
+            }
+
+            // Add each line item in the cart
+            $index = 1;
+            foreach ($order->lineItems as $lineItem) {
+                $this->addProductDataFromLineItem($event, $lineItem, $index);
+                $index++;
+            }
+
+            InstantAnalytics::$plugin->ga4->getAnalytics()->addEvent($event);
+
+            InstantAnalytics::$plugin->logAnalyticsEvent(
+                'Adding `Commerce - Add Shipping Info event`: `{shippingTier}`',
+                ['shippingTier' => $shippingTier ?? ''],
+                __METHOD__
+            );
+        }
+    }
+
+    /**
+     * Enqueue analytics information for payment info being added during checkout
+     *
+     * @param ?Order $order
+     * @param ?string $paymentType the payment type; falls back to the order's gateway name
+     */
+    public function triggerAddPaymentInfoEvent(Order $order = null, ?string $paymentType = null)
+    {
+        if ($order) {
+            $event = InstantAnalytics::$plugin->ga4->getAnalytics()->create()->AddPaymentInfoEvent();
+            // First, include the transaction data
+            $event->setCurrency($order->getPaymentCurrency())
+                ->setValue($order->getTotalPrice());
+
+            // Determine the payment type from the order if one wasn't passed in
+            $paymentType = $paymentType ?? $order->getGateway()?->name;
+            if (!empty($paymentType)) {
+                $event->setPaymentType($paymentType);
+            }
+
+            // Add each line item in the cart
+            $index = 1;
+            foreach ($order->lineItems as $lineItem) {
+                $this->addProductDataFromLineItem($event, $lineItem, $index);
+                $index++;
+            }
+
+            InstantAnalytics::$plugin->ga4->getAnalytics()->addEvent($event);
+
+            InstantAnalytics::$plugin->logAnalyticsEvent(
+                'Adding `Commerce - Add Payment Info event`: `{paymentType}`',
+                ['paymentType' => $paymentType ?? ''],
+                __METHOD__
+            );
+        }
+    }
+
+    /**
+     * Send analytics information for a product/variant selected from a list
+     *
+     * @param Product|Variant|null $productVariant the Product or Variant
+     * @param string $listName
+     * @throws InvalidConfigException
+     */
+    public function addCommerceProductSelect(Variant|Product|null $productVariant, string $listName = 'default'): void
+    {
+        if ($productVariant) {
+            $event = InstantAnalytics::$plugin->ga4->getAnalytics()->create()->SelectItemEvent();
+            if (!empty($listName)) {
+                $event->setItemListName($listName);
+            }
+            $this->addProductDataFromProductOrVariant($event, $productVariant, null, $listName);
+
+            InstantAnalytics::$plugin->ga4->getAnalytics()->addEvent($event);
+
+            $sku = $productVariant instanceof Product ? $productVariant->getDefaultVariant()->sku : $productVariant->sku;
+            InstantAnalytics::$plugin->logAnalyticsEvent(
+                'Adding select item event for `{sku}` from the `{listName}` list.',
+                ['sku' => $sku, 'listName' => $listName],
+                __METHOD__
+            );
+        }
+    }
+
+    /**
      * Send analytics information for the item added to the cart
      *
      * @param LineItem $lineItem the line item that was added

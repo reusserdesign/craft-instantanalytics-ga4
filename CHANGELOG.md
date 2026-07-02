@@ -1,5 +1,10 @@
 # Instant Analytics GA4 Changelog
 
+## Unreleased
+### Added
+* Added Craft Commerce checkout-funnel helpers so the full GA4 ecommerce funnel can be tracked: `instantAnalytics.viewCart()` (`view_cart`), `instantAnalytics.addShippingInfo()` (`add_shipping_info`), `instantAnalytics.addPaymentInfo()` (`add_payment_info`), and `instantAnalytics.addCommerceProductSelect()` (`select_item`). `addShippingInfo()`/`addPaymentInfo()` fall back to the order's shipping method name / gateway name when a tier/type isn't passed in.
+* Exposed the existing `beginCheckout()` helper directly on the `instantAnalytics` Twig variable for consistency.
+
 ## 4.0.3 - 2024.09.14
 ### Fixed
 * Fixed an inadvertant dependency on SEOmatic ([#35](https://github.com/nystudio107/craft-instantanalytics-ga4/issues/35))
