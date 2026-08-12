@@ -135,7 +135,7 @@ class Commerce extends Component
                 ->setValue($order->getTotalPrice());
 
             // Determine the shipping tier from the order if one wasn't passed in
-            $shippingTier = $shippingTier ?? $order->shippingMethodName ?? $order->getShippingMethod()?->getName();
+            $shippingTier = $shippingTier ?: ($order->shippingMethodName ?: $order->shippingMethodHandle);
             if (!empty($shippingTier)) {
                 $event->setShippingTier($shippingTier);
             }
@@ -172,7 +172,7 @@ class Commerce extends Component
                 ->setValue($order->getTotalPrice());
 
             // Determine the payment type from the order if one wasn't passed in
-            $paymentType = $paymentType ?? $order->getGateway()?->name;
+            $paymentType = $paymentType ?: $order->getGateway()?->name;
             if (!empty($paymentType)) {
                 $event->setPaymentType($paymentType);
             }
