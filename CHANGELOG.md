@@ -6,6 +6,9 @@
 * Exposed the existing `beginCheckout()` helper directly on the `instantAnalytics` Twig variable for consistency.
 * Added `Commerce::EVENT_MODIFY_COMMERCE_EVENT`, which fires for every Commerce-derived event before it’s queued, so projects can attach their own parameters to it or suppress it entirely.
 
+### Changed
+* The Commerce Twig helpers no longer take down the page they’re called from when they fail. Errors are logged instead, and only re-thrown when `devMode` is on. Their `Order` arguments are now nullable to match, so a missing cart is a no-op rather than a `TypeError`.
+
 ## 4.0.3 - 2024.09.14
 ### Fixed
 * Fixed an inadvertant dependency on SEOmatic ([#35](https://github.com/nystudio107/craft-instantanalytics-ga4/issues/35))

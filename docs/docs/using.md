@@ -149,6 +149,10 @@ It’ll just work.  In addition to the basic automatic tracking that Instant Ana
 * `{% do instantAnalytics.addShippingInfo(CART, SHIPPING_TIER) %}` - This will send an `AddShippingInfo` event for the given cart `Order`. `SHIPPING_TIER` is optional; if omitted it falls back to the order’s shipping method name.
 * `{% do instantAnalytics.addPaymentInfo(CART, PAYMENT_TYPE) %}` - This will send an `AddPaymentInfo` event for the given cart `Order`. `PAYMENT_TYPE` is optional; if omitted it falls back to the order’s gateway name.
 
+The Commerce helpers above are called mid-render, so a failure inside one of them would otherwise surface as a 500 for the visitor. They log and swallow their errors instead, and only re-throw when `devMode` is on — a lost analytics event beats a lost page. Passing a null cart is a no-op for the same reason.
+
+Note that this only covers the helpers themselves. Events are sent after the response has already gone out, so a failure there never reaches the visitor either way, but it also won’t be obvious — check your logs.
+
 ### Adding your own metadata to Commerce events
 
 If you need to send project-specific parameters along with the Commerce events above, listen for `Commerce::EVENT_MODIFY_COMMERCE_EVENT`. It fires for every Commerce-derived event just before it’s queued, and hands you both the GA4 event and the Commerce element it was built from:

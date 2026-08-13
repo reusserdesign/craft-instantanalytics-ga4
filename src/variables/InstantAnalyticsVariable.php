@@ -11,6 +11,7 @@
 namespace nystudio107\instantanalyticsGa4\variables;
 
 use Br33f\Ga4\MeasurementProtocol\Dto\Event\BaseEvent;
+use Craft;
 use craft\commerce\elements\Order;
 use craft\commerce\elements\Product;
 use craft\commerce\elements\Variant;
@@ -21,6 +22,7 @@ use nystudio107\instantanalyticsGa4\helpers\Analytics as AnalyticsHelper;
 use nystudio107\instantanalyticsGa4\InstantAnalytics;
 use nystudio107\pluginvite\variables\ViteVariableInterface;
 use nystudio107\pluginvite\variables\ViteVariableTrait;
+use Throwable;
 use Twig\Markup;
 use yii\base\Exception;
 
@@ -73,62 +75,74 @@ class InstantAnalyticsVariable implements ViteVariableInterface
     }
 
     /**
-     * @param Product|Variant $productVariant the Product or Variant
+     * @param Product|Variant|null $productVariant the Product or Variant
      */
-    public function addCommerceProductView($productVariant): void
+    public function addCommerceProductView($productVariant = null): void
     {
-        InstantAnalytics::$plugin->commerce->addCommerceProductImpression($productVariant);
+        $this->collect(__METHOD__, static function() use ($productVariant) {
+            InstantAnalytics::$plugin->commerce->addCommerceProductImpression($productVariant);
+        });
     }
 
     /**
-     * @param Product|Variant $productVariant the Product or Variant
+     * @param Product|Variant|null $productVariant the Product or Variant
      * @param string $listName
      */
-    public function addCommerceProductSelect($productVariant, string $listName = 'default'): void
+    public function addCommerceProductSelect($productVariant = null, string $listName = 'default'): void
     {
-        InstantAnalytics::$plugin->commerce->addCommerceProductSelect($productVariant, $listName);
+        $this->collect(__METHOD__, static function() use ($productVariant, $listName) {
+            InstantAnalytics::$plugin->commerce->addCommerceProductSelect($productVariant, $listName);
+        });
     }
 
     /**
      * Send a begin_checkout event for the given cart
      *
-     * @param Order $cart
+     * @param ?Order $cart
      */
-    public function beginCheckout(Order $cart): void
+    public function beginCheckout(?Order $cart = null): void
     {
-        InstantAnalytics::$plugin->commerce->triggerBeginCheckoutEvent($cart);
+        $this->collect(__METHOD__, static function() use ($cart) {
+            InstantAnalytics::$plugin->commerce->triggerBeginCheckoutEvent($cart);
+        });
     }
 
     /**
      * Send a view_cart event for the given cart
      *
-     * @param Order $cart
+     * @param ?Order $cart
      */
-    public function viewCart(Order $cart): void
+    public function viewCart(?Order $cart = null): void
     {
-        InstantAnalytics::$plugin->commerce->triggerViewCartEvent($cart);
+        $this->collect(__METHOD__, static function() use ($cart) {
+            InstantAnalytics::$plugin->commerce->triggerViewCartEvent($cart);
+        });
     }
 
     /**
      * Send an add_shipping_info event for the given cart
      *
-     * @param Order $cart
+     * @param ?Order $cart
      * @param ?string $shippingTier
      */
-    public function addShippingInfo(Order $cart, ?string $shippingTier = null): void
+    public function addShippingInfo(?Order $cart = null, ?string $shippingTier = null): void
     {
-        InstantAnalytics::$plugin->commerce->triggerAddShippingInfoEvent($cart, $shippingTier);
+        $this->collect(__METHOD__, static function() use ($cart, $shippingTier) {
+            InstantAnalytics::$plugin->commerce->triggerAddShippingInfoEvent($cart, $shippingTier);
+        });
     }
 
     /**
      * Send an add_payment_info event for the given cart
      *
-     * @param Order $cart
+     * @param ?Order $cart
      * @param ?string $paymentType
      */
-    public function addPaymentInfo(Order $cart, ?string $paymentType = null): void
+    public function addPaymentInfo(?Order $cart = null, ?string $paymentType = null): void
     {
-        InstantAnalytics::$plugin->commerce->triggerAddPaymentInfoEvent($cart, $paymentType);
+        $this->collect(__METHOD__, static function() use ($cart, $paymentType) {
+            InstantAnalytics::$plugin->commerce->triggerAddPaymentInfoEvent($cart, $paymentType);
+        });
     }
 
     /**
@@ -160,5 +174,33 @@ class InstantAnalyticsVariable implements ViteVariableInterface
         array  $params = [],
     ): Markup {
         return Template::raw(AnalyticsHelper::getEventTrackingUrl($url, $eventName, $params));
+    }
+
+    // Private Methods
+    // =========================================================================
+
+    /**
+     * Collect an analytics event, without letting a failure take down the page
+     * that is being rendered.
+     *
+     * These helpers are called from Twig mid-render, so anything they throw
+     * surfaces as a 500 for the visitor. Losing an analytics event is always
+     * preferable to losing the page, so failures are logged and swallowed —
+     * except in devMode, where failing loudly is what you want.
+     *
+     * @param string $method the calling method, used as the log category
+     * @param callable $fn
+     */
+    private function collect(string $method, callable $fn): void
+    {
+        try {
+            $fn();
+        } catch (Throwable $e) {
+            Craft::error($e, $method);
+
+            if (Craft::$app->getConfig()->getGeneral()->devMode) {
+                throw $e;
+            }
+        }
     }
 }
