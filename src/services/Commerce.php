@@ -10,6 +10,7 @@
 
 namespace nystudio107\instantanalyticsGa4\services;
 
+use Br33f\Ga4\MeasurementProtocol\Dto\Event\AbstractEvent;
 use Br33f\Ga4\MeasurementProtocol\Dto\Event\ItemBaseEvent;
 use Br33f\Ga4\MeasurementProtocol\Dto\Event\PurchaseEvent;
 use Br33f\Ga4\MeasurementProtocol\Dto\Parameter\ItemParameter;
@@ -23,6 +24,7 @@ use craft\elements\db\CategoryQuery;
 use craft\elements\db\EntryQuery;
 use craft\elements\db\MatrixBlockQuery;
 use craft\elements\db\TagQuery;
+use nystudio107\instantanalyticsGa4\events\ModifyCommerceEventEvent;
 use nystudio107\instantanalyticsGa4\InstantAnalytics;
 use yii\base\InvalidConfigException;
 use function get_class;
@@ -36,6 +38,30 @@ use function get_class;
  */
 class Commerce extends Component
 {
+    // Constants
+    // =========================================================================
+
+    /**
+     * @event ModifyCommerceEventEvent Fired before a Commerce-derived analytics
+     * event is queued for sending, so that projects can attach their own
+     * metadata to it, or suppress it entirely.
+     *
+     * ```php
+     * use nystudio107\instantanalyticsGa4\events\ModifyCommerceEventEvent;
+     * use nystudio107\instantanalyticsGa4\services\Commerce;
+     * use yii\base\Event;
+     *
+     * Event::on(
+     *     Commerce::class,
+     *     Commerce::EVENT_MODIFY_COMMERCE_EVENT,
+     *     function(ModifyCommerceEventEvent $event) {
+     *         $event->analyticsEvent->setParamValue('my_param', 'my value');
+     *     }
+     * );
+     * ```
+     */
+    public const EVENT_MODIFY_COMMERCE_EVENT = 'modifyCommerceEvent';
+
     // Public Methods
     // =========================================================================
 
@@ -50,7 +76,7 @@ class Commerce extends Component
             $event = InstantAnalytics::$plugin->ga4->getAnalytics()->create()->PurchaseEvent();
             $this->addCommerceOrderToEvent($event, $order);
 
-            InstantAnalytics::$plugin->ga4->getAnalytics()->addEvent($event);
+            $this->addAnalyticsEvent($event, $order);
 
             InstantAnalytics::$plugin->logAnalyticsEvent(
                 'Adding `Commerce - Order Complete event`: `{reference}` => `{price}`',
@@ -80,7 +106,7 @@ class Commerce extends Component
                 $index++;
             }
 
-            InstantAnalytics::$plugin->ga4->getAnalytics()->addEvent($event);
+            $this->addAnalyticsEvent($event, $order);
 
             InstantAnalytics::$plugin->logAnalyticsEvent(
                 'Adding `Commerce - Begin Checkout event``',
@@ -110,7 +136,7 @@ class Commerce extends Component
                 $index++;
             }
 
-            InstantAnalytics::$plugin->ga4->getAnalytics()->addEvent($event);
+            $this->addAnalyticsEvent($event, $order);
 
             InstantAnalytics::$plugin->logAnalyticsEvent(
                 'Adding `Commerce - View Cart event``',
@@ -147,7 +173,7 @@ class Commerce extends Component
                 $index++;
             }
 
-            InstantAnalytics::$plugin->ga4->getAnalytics()->addEvent($event);
+            $this->addAnalyticsEvent($event, $order);
 
             InstantAnalytics::$plugin->logAnalyticsEvent(
                 'Adding `Commerce - Add Shipping Info event`: `{shippingTier}`',
@@ -184,7 +210,7 @@ class Commerce extends Component
                 $index++;
             }
 
-            InstantAnalytics::$plugin->ga4->getAnalytics()->addEvent($event);
+            $this->addAnalyticsEvent($event, $order);
 
             InstantAnalytics::$plugin->logAnalyticsEvent(
                 'Adding `Commerce - Add Payment Info event`: `{paymentType}`',
@@ -210,7 +236,7 @@ class Commerce extends Component
             }
             $this->addProductDataFromProductOrVariant($event, $productVariant, null, $listName);
 
-            InstantAnalytics::$plugin->ga4->getAnalytics()->addEvent($event);
+            $this->addAnalyticsEvent($event, $productVariant);
 
             $sku = $productVariant instanceof Product ? $productVariant->getDefaultVariant()->sku : $productVariant->sku;
             InstantAnalytics::$plugin->logAnalyticsEvent(
@@ -230,7 +256,7 @@ class Commerce extends Component
     {
         $event = InstantAnalytics::$plugin->ga4->getAnalytics()->create()->AddToCartEvent();
         $this->addProductDataFromLineItem($event, $lineItem);
-        InstantAnalytics::$plugin->ga4->getAnalytics()->addEvent($event);
+        $this->addAnalyticsEvent($event, $lineItem);
 
         InstantAnalytics::$plugin->logAnalyticsEvent(
             'Adding `Commerce - Add to Cart event`: `{title}` => `{quantity}`',
@@ -248,7 +274,7 @@ class Commerce extends Component
     {
         $event = InstantAnalytics::$plugin->ga4->getAnalytics()->create()->RemoveFromCartEvent();
         $this->addProductDataFromLineItem($event, $lineItem);
-        InstantAnalytics::$plugin->ga4->getAnalytics()->addEvent($event);
+        $this->addAnalyticsEvent($event, $lineItem);
 
         InstantAnalytics::$plugin->logAnalyticsEvent(
             'Adding `Commerce - Remove from Cart event`: `{title}` => `{quantity}`',
@@ -269,7 +295,7 @@ class Commerce extends Component
             $event = InstantAnalytics::$plugin->ga4->getAnalytics()->create()->ViewItemEvent();
             $this->addProductDataFromProductOrVariant($event, $productVariant);
 
-            InstantAnalytics::$plugin->ga4->getAnalytics()->addEvent($event);
+            $this->addAnalyticsEvent($event, $productVariant);
 
             $sku = $productVariant instanceof Product ? $productVariant->getDefaultVariant()->sku : $productVariant->sku;
             $name = $productVariant instanceof Product ? $productVariant->getName() : $productVariant->getProduct()->getName();
@@ -295,7 +321,7 @@ class Commerce extends Component
                 $this->addProductDataFromProductOrVariant($event, $productVariant, $index, $listName);
             }
 
-            InstantAnalytics::$plugin->ga4->getAnalytics()->addEvent($event);
+            $this->addAnalyticsEvent($event, $products);
 
             InstantAnalytics::$plugin->logAnalyticsEvent(
                 'Adding view item list event. Listing {number} of items from the `{listName}` list.',
@@ -303,6 +329,34 @@ class Commerce extends Component
                 __METHOD__
             );
         }
+    }
+
+    /**
+     * Queue an analytics event for sending, giving projects a chance to modify
+     * it, or suppress it, via EVENT_MODIFY_COMMERCE_EVENT first.
+     *
+     * @param AbstractEvent $event the GA4 event
+     * @param mixed $source the Commerce element the event was built from
+     */
+    protected function addAnalyticsEvent(AbstractEvent $event, mixed $source = null): void
+    {
+        $modifyEvent = new ModifyCommerceEventEvent([
+            'analyticsEvent' => $event,
+            'source' => $source,
+        ]);
+        $this->trigger(self::EVENT_MODIFY_COMMERCE_EVENT, $modifyEvent);
+
+        if (!$modifyEvent->isValid) {
+            InstantAnalytics::$plugin->logAnalyticsEvent(
+                'Suppressed `{name}` event via `EVENT_MODIFY_COMMERCE_EVENT`',
+                ['name' => $event->getName() ?? ''],
+                __METHOD__
+            );
+
+            return;
+        }
+
+        InstantAnalytics::$plugin->ga4->getAnalytics()->addEvent($modifyEvent->analyticsEvent);
     }
 
     /**

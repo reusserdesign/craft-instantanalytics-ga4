@@ -149,6 +149,33 @@ It’ll just work.  In addition to the basic automatic tracking that Instant Ana
 * `{% do instantAnalytics.addShippingInfo(CART, SHIPPING_TIER) %}` - This will send an `AddShippingInfo` event for the given cart `Order`. `SHIPPING_TIER` is optional; if omitted it falls back to the order’s shipping method name.
 * `{% do instantAnalytics.addPaymentInfo(CART, PAYMENT_TYPE) %}` - This will send an `AddPaymentInfo` event for the given cart `Order`. `PAYMENT_TYPE` is optional; if omitted it falls back to the order’s gateway name.
 
+### Adding your own metadata to Commerce events
+
+If you need to send project-specific parameters along with the Commerce events above, listen for `Commerce::EVENT_MODIFY_COMMERCE_EVENT`. It fires for every Commerce-derived event just before it’s queued, and hands you both the GA4 event and the Commerce element it was built from:
+
+```php
+use nystudio107\instantanalyticsGa4\events\ModifyCommerceEventEvent;
+use nystudio107\instantanalyticsGa4\services\Commerce;
+use yii\base\Event;
+
+Event::on(
+    Commerce::class,
+    Commerce::EVENT_MODIFY_COMMERCE_EVENT,
+    function(ModifyCommerceEventEvent $event) {
+        // $event->source is the Order, LineItem, Product or Variant the event came from
+        if ($event->analyticsEvent->getName() === 'add_shipping_info') {
+            $event->analyticsEvent->setParamValue('my_param', 'my value');
+        }
+    }
+);
+```
+
+Use `setParamValue()` rather than a `setSomething()` setter when you want the parameter name sent to GA4 verbatim — the magic setters convert camelCase to snake_case, which is easy to get wrong for custom names.
+
+Set `$event->isValid = false` to drop the event entirely instead of sending it.
+
+Any custom parameter you send has to be registered as a custom dimension (or metric) in the GA4 admin before it will show up in reports.
+
 You can also take advantage of the built-in events, such as `AddShippingInfo` like this
 
 ```twig

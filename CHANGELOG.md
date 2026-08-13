@@ -4,6 +4,7 @@
 ### Added
 * Added Craft Commerce checkout-funnel helpers so the full GA4 ecommerce funnel can be tracked: `instantAnalytics.viewCart()` (`view_cart`), `instantAnalytics.addShippingInfo()` (`add_shipping_info`), `instantAnalytics.addPaymentInfo()` (`add_payment_info`), and `instantAnalytics.addCommerceProductSelect()` (`select_item`). `addShippingInfo()`/`addPaymentInfo()` fall back to the order's shipping method name / gateway name when a tier/type isn't passed in.
 * Exposed the existing `beginCheckout()` helper directly on the `instantAnalytics` Twig variable for consistency.
+* Added `Commerce::EVENT_MODIFY_COMMERCE_EVENT`, which fires for every Commerce-derived event before it’s queued, so projects can attach their own parameters to it or suppress it entirely.
 
 ## 4.0.3 - 2024.09.14
 ### Fixed
