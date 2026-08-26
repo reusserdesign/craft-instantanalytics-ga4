@@ -344,7 +344,12 @@ class Commerce extends Component
             'analyticsEvent' => $event,
             'source' => $source,
         ]);
-        $this->trigger(self::EVENT_MODIFY_COMMERCE_EVENT, $modifyEvent);
+
+        // A handler throwing in here would otherwise surface inside Commerce's
+        // own order lifecycle, so a bad handler can only cost its own metadata
+        InstantAnalytics::$plugin->safely(__METHOD__, function() use ($modifyEvent) {
+            $this->trigger(self::EVENT_MODIFY_COMMERCE_EVENT, $modifyEvent);
+        });
 
         if (!$modifyEvent->isValid) {
             InstantAnalytics::$plugin->logAnalyticsEvent(

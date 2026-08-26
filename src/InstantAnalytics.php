@@ -11,6 +11,7 @@
 namespace nystudio107\instantanalyticsGa4;
 
 use Craft;
+use Throwable;
 use craft\base\Model;
 use craft\base\Plugin;
 use craft\commerce\elements\Order;
@@ -188,6 +189,26 @@ class InstantAnalytics extends Plugin
     }
 
     /**
+     * Run an analytics task without ever letting it escape.
+     *
+     * The automatic Commerce events are collected from inside Commerce's own
+     * order lifecycle — `EVENT_AFTER_COMPLETE_ORDER` fires once payment has
+     * already been taken — so anything thrown here would fail the order rather
+     * than merely losing the analytics. Nothing is re-thrown, in any mode.
+     *
+     * @param string $context used as the log category
+     * @param callable $fn
+     */
+    public function safely(string $context, callable $fn): void
+    {
+        try {
+            $fn();
+        } catch (Throwable $e) {
+            Craft::error($e, $context);
+        }
+    }
+
+    /**
      * @inheritdoc
      */
     protected function settingsHtml(): ?string
@@ -339,7 +360,9 @@ class InstantAnalytics extends Plugin
                 if (self::$settings->autoSendPageView) {
                     $request = Craft::$app->getRequest();
                     if (!$request->getIsAjax()) {
-                        $this->ga4->addPageViewEvent();
+                        $this->safely(__METHOD__, function() {
+                            $this->ga4->addPageViewEvent();
+                        });
                     }
                 }
             }
@@ -350,8 +373,10 @@ class InstantAnalytics extends Plugin
             Response::class,
             Response::EVENT_BEFORE_SEND,
             function(Event $event): void {
-                // Initialize this sooner rather than later, since it's possible this will want to tinker with cookies
-                $this->ga4->getAnalytics();
+                $this->safely(__METHOD__, function() {
+                    // Initialize this sooner rather than later, since it's possible this will want to tinker with cookies
+                    $this->ga4->getAnalytics();
+                });
             }
         );
 
@@ -360,7 +385,9 @@ class InstantAnalytics extends Plugin
             Response::class,
             Response::EVENT_AFTER_SEND,
             function(Event $event): void {
-                $this->ga4->getAnalytics()->sendCollectedEvents();
+                $this->safely(__METHOD__, function() {
+                    $this->ga4->getAnalytics()->sendCollectedEvents();
+                });
             }
         );
 
@@ -369,14 +396,18 @@ class InstantAnalytics extends Plugin
             Event::on(Order::class, Order::EVENT_AFTER_COMPLETE_ORDER, function(Event $e): void {
                 $order = $e->sender;
                 if (self::$settings->autoSendPurchaseComplete) {
-                    $this->commerce->triggerOrderCompleteEvent($order);
+                    $this->safely(__METHOD__, function() use ($order) {
+                        $this->commerce->triggerOrderCompleteEvent($order);
+                    });
                 }
             });
 
             Event::on(Order::class, Order::EVENT_AFTER_ADD_LINE_ITEM, function(LineItemEvent $e): void {
                 $lineItem = $e->lineItem;
                 if (self::$settings->autoSendAddToCart) {
-                    $this->commerce->triggerAddToCartEvent($lineItem);
+                    $this->safely(__METHOD__, function() use ($lineItem) {
+                        $this->commerce->triggerAddToCartEvent($lineItem);
+                    });
                 }
             });
 
@@ -385,7 +416,9 @@ class InstantAnalytics extends Plugin
                 Event::on(Order::class, Order::EVENT_AFTER_REMOVE_LINE_ITEM, function(LineItemEvent $e): void {
                     $lineItem = $e->lineItem;
                     if (self::$settings->autoSendRemoveFromCart) {
-                        $this->commerce->triggerRemoveFromCartEvent($lineItem);
+                        $this->safely(__METHOD__, function() use ($lineItem) {
+                            $this->commerce->triggerRemoveFromCartEvent($lineItem);
+                        });
                     }
                 });
             }

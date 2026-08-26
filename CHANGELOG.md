@@ -9,6 +9,9 @@
 ### Changed
 * The Commerce Twig helpers no longer take down the page they’re called from when they fail. Errors are logged instead, and only re-thrown when `devMode` is on. Their `Order` arguments are now nullable to match, so a missing cart is a no-op rather than a `TypeError`.
 
+### Fixed
+* Analytics collection can no longer fail a Craft Commerce order. The automatic `purchase`, `add_to_cart` and `remove_from_cart` handlers are collected from inside Commerce's own order lifecycle — `EVENT_AFTER_COMPLETE_ORDER` fires after payment has been taken — and an exception raised while building those events would previously propagate and fail the order. Those handlers, the page-view handler, the response handlers, and `EVENT_MODIFY_COMMERCE_EVENT` are all contained now: failures are logged and never re-thrown.
+
 ## 4.0.3 - 2024.09.14
 ### Fixed
 * Fixed an inadvertant dependency on SEOmatic ([#35](https://github.com/nystudio107/craft-instantanalytics-ga4/issues/35))
